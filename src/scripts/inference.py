@@ -73,7 +73,12 @@ if __name__ == "__main__":
 
     model = SimpleMPGNN(dataset.num_node_features, dataset.num_classes, dataset.num_edge_features,
                         hyperparams["hidden_layers"])
-    model.load_state_dict(torch.load(model_path, map_location=torch.device(device)))
+    # model.load_state_dict(torch.load(model_path, map_location=torch.device(device)))
+    # load state dict, but replace keys "conv1.root" with "conv1.lin.weight", "conv2.root" with "conv2.lin.weight"
+    state_dict = torch.load(model_path, map_location=device)
+    for old_key, new_key in [("conv1.root", "conv1.lin.weight"), ("conv2.root", "conv2.lin.weight")]:
+        state_dict[new_key] = state_dict.pop(old_key).transpose(0, 1)
+    model.load_state_dict(state_dict)
     model.eval()
 
     # Download demo scene meshes
